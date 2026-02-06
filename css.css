@@ -1,0 +1,11 @@
+﻿h1,h2,h3{
+        font-family: 'Arial Black', sans-serif;
+    color: #333333;
+}
+.sty_lable {
+    background-color: yellow;/*1111*/
+    font-style: oblique;
+    font-size: medium;
+    border: 2px;
+    border-color:black;
+}

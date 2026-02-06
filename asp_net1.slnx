@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ADO/ADO.csproj" Id="07cb41f6-0687-4a6f-aeea-743135194b9b" />
+  <Project Path="asp_net1.csproj" Id="c0f07464-b8e4-44e8-ae77-b9c4a6b91ab4" />
+  <Project Path="DateBind/DateBind.csproj" Id="126eeac8-85c4-4fd5-9a2e-c304b71311e0" />
+</Solution>
