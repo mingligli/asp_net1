@@ -69,6 +69,7 @@
   <ItemGroup>
     <Content Include="Delete.aspx" />
     <Content Include="Edit.aspx" />
+    <Content Include="PROCEDURE.aspx" />
     <Content Include="Select.aspx" />
     <Content Include="Web.config" />
     <Content Include="Add.aspx" />
@@ -87,6 +88,13 @@
     </Compile>
     <Compile Include="Edit.aspx.designer.cs">
       <DependentUpon>Edit.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PROCEDURE.aspx.cs">
+      <DependentUpon>PROCEDURE.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PROCEDURE.aspx.designer.cs">
+      <DependentUpon>PROCEDURE.aspx</DependentUpon>
     </Compile>
     <Compile Include="Select.aspx.cs">
       <DependentUpon>Select.aspx</DependentUpon>
