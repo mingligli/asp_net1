@@ -1,0 +1,48 @@
+﻿<html>
+@model IList<MVC.Models.Student>
+@{
+    ViewBag.Title = "学生列表";
+}
+<!-- 引用全局样式 + 学生列表专属样式 -->
+<link href="@Url.Content("~/Content/Site.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Content/Student/StudentList.css")" rel="stylesheet" type="text/css" />
+
+    @Html.ActionLink("添加学生", "Add", "Student")
+
+<body>
+    <table class="student-table">
+        <thead>
+            <tr>
+                <th height="40">ID</th>
+                <th>姓名</th>
+                <th>性别</th>
+                <th>年龄</th>
+                <th>班级</th>
+                <th>操作</th>
+            </tr>
+            @{
+                foreach (MVC.Models.Student s in Model)
+                {
+                        <tr>
+                            <td>@s.ID</td>
+                            <td>@s.Name</td>
+                            <td>@s.Sex</td>
+                            <td>@s.Age</td>
+                            <td>@s.Class</td>
+                            <td>
+                                @Html.ActionLink("编辑", "Update", "Student", new { id = s.ID }, null)
+                                @Html.Raw(" | ")
+                                @Html.ActionLink("删除", "Delete", "Student", new { id = s.ID },
+                                    new
+                                         {
+                                        onclick = "return confirm('确定要删除学生 【" + s.Name + "】 吗？');"
+                                    })
+                            </td>
+                        </tr>
+                }
+            }
+        </thead>
+    </table>
+</body>
+</html>
+

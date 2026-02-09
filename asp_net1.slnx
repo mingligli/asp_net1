@@ -3,4 +3,5 @@
   <Project Path="asp_net1.csproj" Id="c0f07464-b8e4-44e8-ae77-b9c4a6b91ab4" />
   <Project Path="DataGridView/DataGridView.csproj" Id="552db1a8-41ca-42aa-98c5-93313b2d3980" />
   <Project Path="DateBind/DateBind.csproj" Id="126eeac8-85c4-4fd5-9a2e-c304b71311e0" />
+  <Project Path="MVC/MVC.csproj" Id="45843ef5-e116-4e4f-b019-503580a392a8" />
 </Solution>

@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="DataList.aspx" />
+    <Content Include="ListView.aspx" />
     <Content Include="Web.config" />
     <Content Include="DataGrid.aspx" />
   </ItemGroup>
@@ -78,6 +79,13 @@
     </Compile>
     <Compile Include="DataList.aspx.designer.cs">
       <DependentUpon>DataList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ListView.aspx.cs">
+      <DependentUpon>ListView.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ListView.aspx.designer.cs">
+      <DependentUpon>ListView.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DataGrid.aspx.cs">

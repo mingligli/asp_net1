@@ -1,0 +1,24 @@
+﻿
+@model List<string>
+@{
+    ViewBag.Title = "新闻";
+}
+
+<ul>
+    @{
+        int i = 0;
+        foreach (string s in Model)
+        {
+            if (i == 0)
+            {
+                <li><h3><a href="#">@s</a></h3></li>
+            }
+            else
+            {
+                <li><h4><a href="#">@s</a></h4></li>
+            }
+        }
+    }
+
+</ul>
+
