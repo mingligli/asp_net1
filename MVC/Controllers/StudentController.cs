@@ -25,14 +25,23 @@ namespace MVC.Controllers
             return View();
         }
         [HttpPost]
-        public ActionResult Add(Student stu)
+        [ValidateAntiForgeryToken]
+        public ActionResult Add(Student model)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(model); // 校验失败仍返回表单页面
+            }
+
             using (studyCEntities1 db = new studyCEntities1())
             {
-                db.Student.Add(stu);
+                db.Student.Add(model);
                 db.SaveChanges();
             }
-            return RedirectToAction("Index");
+            // 保存逻辑...
+            // 成功后返回脚本：在 iframe 内获取父 layer 索引并关闭，刷新父页面
+            var script = "<script>var idx = parent.layer.getFrameIndex(window.name); parent.layer.close(idx); parent.location.reload();</script>";
+            return Content(script, "text/html");
         }
         [HttpGet]
         public ActionResult Update(int id)
@@ -45,18 +54,26 @@ namespace MVC.Controllers
             return View(stu);
         }
         [HttpPost]
-        public ActionResult Update(Student stu)
+        [ValidateAntiForgeryToken]
+        public ActionResult Update(Student model)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
             using (studyCEntities1 db = new studyCEntities1())
             {
-                Student student = db.Student.Where(s => s.ID == stu.ID).FirstOrDefault();
-                student.Name = stu.Name;
-                student.Sex = stu.Sex;
-                student.Age = stu.Age;
-                student.Class = stu.Class;
+                Student student = db.Student.Where(s => s.ID == model.ID).FirstOrDefault();
+                student.Name = model.Name;
+                student.Sex = model.Sex;
+                student.Age = model.Age;
+                student.Class = model.Class;
                 db.SaveChanges();
             }
-            return RedirectToAction("Index");
+            // 更新逻辑...
+            var script = "<script>var idx = parent.layer.getFrameIndex(window.name); parent.layer.close(idx); parent.location.reload();</script>";
+            return Content(script, "text/html");
         }
         public ActionResult Delete(int id)
         {

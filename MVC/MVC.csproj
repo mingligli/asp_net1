@@ -172,6 +172,9 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\layui\css\layui.css" />
+    <Content Include="Content\layui\font\iconfont.svg" />
+    <Content Include="Content\layui\layui.js" />
     <Content Include="Content\Student\StudentList.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
@@ -199,6 +202,10 @@
     <Content Include="Models\StudyC.edmx.diagram">
       <DependentUpon>StudyC.edmx</DependentUpon>
     </Content>
+    <Content Include="Content\layui\font\iconfont.eot" />
+    <Content Include="Content\layui\font\iconfont.ttf" />
+    <Content Include="Content\layui\font\iconfont.woff" />
+    <Content Include="Content\layui\font\iconfont.woff2" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
