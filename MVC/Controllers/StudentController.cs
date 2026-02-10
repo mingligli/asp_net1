@@ -15,7 +15,7 @@ namespace MVC.Controllers
             IList<Student> students = null;
             using (studyCEntities1 db = new studyCEntities1())
             {
-                students = db.Student.Select(s => s).ToList();
+                students = db.Student.Select(s => s).OrderBy(s => s.ID).ToList();
             }
             return View(students);
         }
