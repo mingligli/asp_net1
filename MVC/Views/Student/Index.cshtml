@@ -14,6 +14,9 @@
 <style>
     .container {
         padding: 15px;
+        /* 限制容器最大高度，适配视口 */
+        max-height: calc(100vh - 120px);
+        box-sizing: border-box;
     }
 
     .header-toolbar {
@@ -38,13 +41,51 @@
     .layui-table th {
         text-align: center;
         font-weight: bold;
+        /* 表头固定 */
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
     }
+
+    /* 表格滚动容器核心样式 */
+    .table-scroll-container {
+        height: 400px; /* 固定表格容器高度，可根据需要调整 */
+        overflow-y: auto; /* 垂直方向超出滚动 */
+        border: 1px solid #e6e6e6;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+        /* 去掉layui表格默认的外边距，避免容器内有多余空白 */
+        .table-scroll-container .layui-table {
+            margin: 0;
+            width: 100%;
+        }
 
     /* 分页样式 */
     .pagination-container {
         margin-top: 20px;
         text-align: right;
     }
+
+    /* 滚动条样式优化（可选） */
+    .table-scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+
+        .table-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
 </style>
 
 <div class="container">
@@ -96,45 +137,48 @@
         </div>
     </div>
 
-    <!-- 学生列表 -->
-    <table class="layui-table" id="studentTable">
-        <thead>
-            <tr>
-                <th width="80">ID</th>
-                <th>姓名</th>
-                <th width="100">性别</th>
-                <th width="100">年龄</th>
-                <th>班级</th>
-                <th width="200">操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (MVC.Models.Student s in Model)
-            {
-                <tr data-class="@s.Class" data-sex="@s.Sex">
-                    <td style="text-align: center;">@s.ID</td>
-                    <td>@s.Name</td>
-                    <td style="text-align: center;">@s.Sex</td>
-                    <td style="text-align: center;">@s.Age</td>
-                    <td>@s.Class</td>
-                    <td style="text-align: center;">
-                        <button class="layui-btn layui-btn-xs" onclick="editStudent(@s.ID)">
-                            <i class="layui-icon">&#xe642;</i> 编辑
-                        </button>
-                        <button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteStudent(@s.ID, '@s.Name')">
-                            <i class="layui-icon">&#xe640;</i> 删除
-                        </button>
-                    </td>
-                </tr>
-            }
-            @if (Model.Count == 0)
-            {
+    <!-- 表格滚动容器：核心修改 -->
+    <div class="table-scroll-container">
+        <!-- 学生列表 -->
+        <table class="layui-table" id="studentTable">
+            <thead>
                 <tr>
-                    <td colspan="6" style="text-align: center;">暂无数据</td>
+                    <th width="80">ID</th>
+                    <th>姓名</th>
+                    <th width="100">性别</th>
+                    <th width="100">年龄</th>
+                    <th>班级</th>
+                    <th width="200">操作</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (MVC.Models.Student s in Model)
+                {
+                    <tr data-class="@s.Class" data-sex="@s.Sex">
+                        <td style="text-align: center;">@s.ID</td>
+                        <td>@s.Name</td>
+                        <td style="text-align: center;">@s.Sex</td>
+                        <td style="text-align: center;">@s.Age</td>
+                        <td>@s.Class</td>
+                        <td style="text-align: center;">
+                            <button class="layui-btn layui-btn-xs" onclick="editStudent(@s.ID)">
+                                <i class="layui-icon">&#xe642;</i> 编辑
+                            </button>
+                            <button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteStudent(@s.ID, '@s.Name')">
+                                <i class="layui-icon">&#xe640;</i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" style="text-align: center;">暂无数据</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
     <!-- 分页组件 -->
     <div class="pagination-container" id="pagination"></div>
@@ -242,7 +286,11 @@
         }
 
         function updateCounts(count) {
-            document.getElementById('currentCount').textContent = count;
+            // 修复：如果页面没有currentCount元素，先判断是否存在再赋值
+            var countElement = document.getElementById('currentCount');
+            if (countElement) {
+                countElement.textContent = count;
+            }
         }
 
         // 弹窗函数保持不变

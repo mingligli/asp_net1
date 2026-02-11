@@ -8,31 +8,63 @@
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
     <style>
-        html {
-            position: relative;
-            min-height: 100%;
+        /* 重置默认样式，确保flex布局生效 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        body {
-            margin: 0 0 30px; /* 底部边距等于footer高度 */
+        html, body {
+            height: 100%; /* 让html和body占满视口高度 */
+            overflow: hidden; /* 隐藏全局滚动条 */
         }
 
-        .container.body-content {
-            padding-top: 20px;
-            padding-bottom: 20px;
+        /* 主容器：弹性布局，垂直排列 */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
+        /* 固定顶部导航栏 */
+        nav.navbar {
+            position: static; /* 取消fixed，改用flex布局固定 */
+            z-index: 9999;
+            flex-shrink: 0; /* 导航栏不收缩 */
+            margin-bottom: 0;
+        }
+
+        /* 主体内容区域：占满剩余高度 */
+        .main-content {
+            flex: 1; /* 占满剩余视口高度 */
+            overflow: hidden; /* 隐藏自身滚动条 */
+            padding: 20px 15px;
+            width: 100%;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        /* 表格容器：固定高度，超出滚动 */
+        .table-container {
+            height: calc(100% - 120px); /* 减去工具栏、统计信息的高度 */
+            overflow-y: auto; /* 垂直方向超出滚动 */
+            border: 1px solid #e6e6e6;
+            border-radius: 4px;
+        }
+
+        /* 固定底部页脚 */
         footer {
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            height: 30px; /* 修改为30px */
+            position: static; /* 取消fixed，改用flex布局固定 */
+            height: 30px;
             width: 100%;
             background-color: #f8f9fa;
-            padding: 5px 0; /* 减少内边距以适应新高度 */
+            padding: 5px 0;
             text-align: center;
             border-top: 1px solid #dee2e6;
-            line-height: 20px; /* 调整行高 */
+            line-height: 20px;
+            z-index: 999;
+            flex-shrink: 0; /* 页脚不收缩 */
         }
 
             footer .container {
@@ -44,56 +76,111 @@
                 font-size: 14px;
             }
 
+        /* 学生列表页面的样式适配 */
+        .header-toolbar {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+            align-items: center;
+        }
+
+        .layui-input-inline {
+            margin-right: 10px;
+        }
+
+        .layui-table {
+            margin: 0; /* 去掉layui表格默认外边距 */
+            width: 100%;
+        }
+
+            .layui-table th {
+                text-align: center;
+                font-weight: bold;
+                position: sticky;
+                top: 0; /* 表头固定 */
+                background-color: #f8f9fa;
+                z-index: 10;
+            }
+
+        .stats-card {
+            margin-top: 15px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         /* 响应式调整 */
         @@media (max-width: 768px) {
-            body {
-                margin-bottom: 30px; /* 保持30px */
+            .main-content {
+                padding: 15px 10px;
+            }
+
+            .table-container {
+                height: calc(100% - 100px); /* 移动端调整高度 */
             }
 
             footer {
                 height: 30px;
                 padding: 3px 0;
+                font-size: 13px;
             }
 
-                footer p {
-                    font-size: 13px;
-                }
+            .header-toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
-            .container.body-content {
-                padding-top: 15px;
+            .search-box {
+                margin-left: 0;
+                margin-top: 10px;
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
-        <div class="container">
-            @Html.ActionLink("应用程序名称", "Index", "Student", new { area = "" }, new { @class = "navbar-brand" })
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="切换导航" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li>@Html.ActionLink("主页", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("新闻", "Index", "News", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("学生", "Index", "Student", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("关于", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("联系方式", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                </ul>
+    <div class="app-container">
+        <!-- 顶部导航栏 -->
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+            <div class="container">
+                @Html.ActionLink("应用程序名称", "Index", "Student", new { area = "" }, new { @class = "navbar-brand" })
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="切换导航" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li>@Html.ActionLink("主页", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+                        <li>@Html.ActionLink("新闻", "Index", "News", new { area = "" }, new { @class = "nav-link" })</li>
+                        <li>@Html.ActionLink("学生", "Index", "Student", new { area = "" }, new { @class = "nav-link" })</li>
+                        <li>@Html.ActionLink("关于", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+                        <li>@Html.ActionLink("联系方式", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <div class="container body-content">
-        @RenderBody()
+        <!-- 主体内容区域（对应@RenderBody()） -->
+        <div class="main-content">
+            @RenderBody()
+        </div>
+
+        <!-- 底部页脚 -->
+        <footer>
+            <div class="container">
+                <p>&copy; @DateTime.Now.Year - 青岩学习 ASP.NET 应用程序</p>
+            </div>
+        </footer>
     </div>
-
-    <footer>
-        <div class="container">
-            <p>&copy; @DateTime.Now.Year - 青岩学习 ASP.NET 应用程序</p>
-        </div>
-    </footer>
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
