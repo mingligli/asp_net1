@@ -1,20 +1,17 @@
 ﻿@model IList<MVC.Models.Student>
 @{
     ViewBag.Title = "学生列表";
-    // 获取分页参数
     int totalCount = ViewBag.TotalCount;
     int currentPage = ViewBag.CurrentPage;
     int pageSize = ViewBag.PageSize;
     int totalPages = ViewBag.TotalPages;
 }
 
-<!-- 引用 layui -->
 <link href="~/Content/layui/css/layui.css" rel="stylesheet" />
 
 <style>
     .container {
         padding: 15px;
-        /* 限制容器最大高度，适配视口 */
         max-height: calc(100vh - 120px);
         box-sizing: border-box;
     }
@@ -38,112 +35,94 @@
         margin-right: 10px;
     }
 
-    .layui-table th {
-        text-align: center;
-        font-weight: bold;
-        /* 表头固定 */
-        position: sticky;
-        top: 0;
-        background-color: #f8f9fa;
-        z-index: 10;
+    /* 允许列拖动的关键样式 */
+    .layui-table {
+        width: auto !important;
+        min-width: 100%;
     }
 
-    /* 表格滚动容器核心样式 */
+        .layui-table th {
+            text-align: center;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+        }
+
+    /* 拖动分隔线 */
+    .resizable-handle {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 1px;
+        height: 100%;
+        background: rgba(0,0,0,0.05);
+        cursor: col-resize;
+        z-index: 99;
+    }
+
+    .hide-column {
+        display: none !important;
+    }
+
     .table-scroll-container {
-        height: 400px; /* 固定表格容器高度，可根据需要调整 */
-        overflow-y: auto; /* 垂直方向超出滚动 */
+        height: 400px;
+        overflow-y: auto;
         border: 1px solid #e6e6e6;
         border-radius: 4px;
         margin-bottom: 15px;
     }
 
-        /* 去掉layui表格默认的外边距，避免容器内有多余空白 */
         .table-scroll-container .layui-table {
             margin: 0;
             width: 100%;
         }
 
-    /* 分页样式 */
     .pagination-container {
         margin-top: 20px;
         text-align: right;
     }
-
-    /* 滚动条样式优化（可选） */
-    .table-scroll-container::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .table-scroll-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-
-    .table-scroll-container::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 3px;
-    }
-
-        .table-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #999;
-        }
 </style>
 
 <div class="container">
-    <!-- 工具栏和搜索区域 -->
     <div class="header-toolbar">
-        <button type="button" class="layui-btn layui-btn-normal" onclick="openAddDialog()">
+        <button class="layui-btn layui-btn-normal" onclick="openAddDialog()">
             <i class="layui-icon">&#xe608;</i> 添加学生
         </button>
-
-        <!-- 搜索区域 -->
         <div class="search-box">
-            <!-- 班级筛选 -->
             <div class="layui-input-inline">
-                <input type="text" id="classFilter" list="classOptions"
-                       placeholder="按班级筛选" class="layui-input"
-                       onchange="filterByClass()" style="width: 150px;">
+                <input type="text" id="classFilter" list="classOptions" placeholder="按班级筛选" class="layui-input" onchange="filterByClass()" style="width:150px;">
                 <datalist id="classOptions">
                     <option value="全部"></option>
-                    @{
-                        // 注意：如果需要筛选所有班级，需单独查询所有班级（因为当前Model是分页后的数据）
-                        using (var db = new MVC.Models.studyCEntities1())
+                    @using (var db = new MVC.Models.studyCEntities1())
+                    {
+                        var cls = db.Student.Select(s => s.Class).Distinct().ToList();
+                        foreach (var c in cls)
                         {
-                            var uniqueClasses = db.Student.Select(s => s.Class).Distinct().ToList();
-                            foreach (var className in uniqueClasses)
-                            {
-                                <option value="@className">@className</option>
-                            }
-                        }
+                            <option value="@c">@c</option>
+}
                     }
                 </datalist>
             </div>
-
-            <!-- 性别筛选 -->
             <div class="layui-input-inline">
-                <input type="text" id="sexFilter" list="sexOptions"
-                       placeholder="按性别筛选" class="layui-input"
-                       onchange="filterBySex()" style="width: 120px;">
+                <input type="text" id="sexFilter" list="sexOptions" placeholder="按性别筛选" class="layui-input" onchange="filterBySex()" style="width:120px;">
                 <datalist id="sexOptions">
                     <option value="全部">全部</option>
                     <option value="男">男</option>
                     <option value="女">女</option>
                 </datalist>
             </div>
-
-            <!-- 重置按钮 -->
-            <button type="button" class="layui-btn layui-btn-primary" onclick="resetFilters()">
-                重置筛选
-            </button>
+            <button class="layui-btn layui-btn-primary" onclick="resetFilters()">重置筛选</button>
         </div>
     </div>
 
-    <!-- 表格滚动容器：核心修改 -->
     <div class="table-scroll-container">
-        <!-- 学生列表 -->
         <table class="layui-table" id="studentTable">
             <thead>
                 <tr>
-                    <th width="80">ID</th>
+                    <th width="60">行号</th>
+                    <th width="80" class="hide-column">ID</th>
                     <th>姓名</th>
                     <th width="100">性别</th>
                     <th width="100">年龄</th>
@@ -152,236 +131,193 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (MVC.Models.Student s in Model)
+                @{int rowNum = 1;}
+                @foreach (var s in Model)
                 {
                     <tr data-class="@s.Class" data-sex="@s.Sex">
-                        <td style="text-align: center;">@s.ID</td>
+                        <td style="text-align:center">@rowNum</td>
+                        <td style="text-align:center" class="hide-column">@s.ID</td>
                         <td>@s.Name</td>
-                        <td style="text-align: center;">@s.Sex</td>
-                        <td style="text-align: center;">@s.Age</td>
+                        <td style="text-align:center">@s.Sex</td>
+                        <td style="text-align:center">@s.Age</td>
                         <td>@s.Class</td>
-                        <td style="text-align: center;">
-                            <button class="layui-btn layui-btn-xs" onclick="editStudent(@s.ID)">
-                                <i class="layui-icon">&#xe642;</i> 编辑
-                            </button>
-                            <button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteStudent(@s.ID, '@s.Name')">
-                                <i class="layui-icon">&#xe640;</i> 删除
-                            </button>
+                        <td style="text-align:center">
+                            <button class="layui-btn layui-btn-xs" onclick="editStudent(@s.ID)">编辑</button>
+                            <button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteStudent(@s.ID,'@s.Name')">删除</button>
                         </td>
                     </tr>
+                    rowNum++;
                 }
                 @if (Model.Count == 0)
                 {
-                    <tr>
-                        <td colspan="6" style="text-align: center;">暂无数据</td>
-                    </tr>
+                    <tr><td colspan="7" style="text-align:center">暂无数据</td></tr>
                 }
             </tbody>
         </table>
     </div>
 
-    <!-- 分页组件 -->
     <div class="pagination-container" id="pagination"></div>
-
 </div>
 
 @section Scripts {
-    <!-- 引入 layui.js -->
     <script src="~/Content/layui/layui.js"></script>
-
     <script>
-        // 初始化layui分页
         layui.use(['laypage', 'layer', 'jquery'], function () {
+            var $ = layui.$;
             var laypage = layui.laypage;
             var layer = layui.layer;
-            var $ = layui.$;
 
-            // 渲染分页
+            // 分页
             laypage.render({
-                elem: 'pagination', // 分页容器ID
-                count: @totalCount, // 总记录数
-                limit: @pageSize,   // 每页显示条数
-                curr: @currentPage, // 当前页码
-                layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip'], // 分页布局
-                limits: [5, 10, 20, 50], // 可选每页条数
+                elem: 'pagination',
+                count: @totalCount,
+                limit: @pageSize,
+                curr: @currentPage,
+                layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip'],
+                limits: [5, 10, 20, 50],
                 jump: function (obj, first) {
-                    // 首次加载不执行
                     if (!first) {
-                        // 跳转到指定页码
-                        window.location.href = '@Url.Action("Index", "Student")?page=' + obj.curr + '&pageSize=' + obj.limit;
+                        location.href = '@Url.Action("Index","Student")?page=' + obj.curr + '&pageSize=' + obj.limit;
                     }
                 }
             });
-        });
 
-        // 筛选函数（适配分页后的本地筛选）
-        function filterByClass() {
-            var selectedClass = document.getElementById('classFilter').value;
-            var rows = document.querySelectorAll('#studentTable tbody tr');
-            var visibleCount = 0;
+            // =========== 列宽拖动核心 ===========
+            function initTableResize() {
+                var th = $('#studentTable th');
+                th.css({ position: 'relative' });
 
-            rows.forEach(function (row) {
-                // 排除暂无数据的行
-                if (row.cells.length === 1 && row.cells[0].colSpan === 6) return;
+                th.each(function () {
+                    if ($(this).hasClass('hide-column')) return;
+                    $('<div class="resizable-handle"></div>').appendTo($(this));
+                });
 
-                var rowClass = row.getAttribute('data-class');
-                var sexFilter = document.getElementById('sexFilter').value;
-                var rowSex = row.getAttribute('data-sex');
+                var startX, startWidth, currentTh;
+                $(document).on('mousedown', '.resizable-handle', function (e) {
+                    e.preventDefault();
+                    currentTh = $(this).parent('th');
+                    startX = e.pageX;
+                    startWidth = currentTh.width();
+                    $(document).on('mousemove', mousemove);
+                    $(document).on('mouseup', mouseup);
+                });
 
-                var showByClass = (selectedClass === '' || selectedClass === '全部' || rowClass === selectedClass);
-                var showBySex = (sexFilter === '' || sexFilter === '全部' || rowSex === sexFilter);
-
-                if (showByClass && showBySex) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
+                function mousemove(e) {
+                    var width = startWidth + (e.pageX - startX);
+                    if (width >= 60) currentTh.width(width);
                 }
-            });
 
-            updateCounts(visibleCount);
-        }
-
-        function filterBySex() {
-            var selectedSex = document.getElementById('sexFilter').value;
-            var rows = document.querySelectorAll('#studentTable tbody tr');
-            var visibleCount = 0;
-
-            rows.forEach(function (row) {
-                // 排除暂无数据的行
-                if (row.cells.length === 1 && row.cells[0].colSpan === 6) return;
-
-                var rowSex = row.getAttribute('data-sex');
-                var classFilter = document.getElementById('classFilter').value;
-                var rowClass = row.getAttribute('data-class');
-
-                var showBySex = (selectedSex === '' || selectedSex === '全部' || rowSex === selectedSex);
-                var showByClass = (classFilter === '' || classFilter === '全部' || rowClass === classFilter);
-
-                if (showBySex && showByClass) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
+                function mouseup() {
+                    $(document).off('mousemove', mousemove);
+                    $(document).off('mouseup', mouseup);
                 }
-            });
-
-            updateCounts(visibleCount);
-        }
-
-        function resetFilters() {
-            document.getElementById('classFilter').value = '';
-            document.getElementById('sexFilter').value = '';
-
-            var rows = document.querySelectorAll('#studentTable tbody tr');
-            rows.forEach(function (row) {
-                // 排除暂无数据的行
-                if (row.cells.length === 1 && row.cells[0].colSpan === 6) return;
-
-                row.style.display = '';
-            });
-
-            // 重置统计数为当前页的记录数
-            updateCounts(@Model.Count);
-        }
-
-        function updateCounts(count) {
-            // 修复：如果页面没有currentCount元素，先判断是否存在再赋值
-            var countElement = document.getElementById('currentCount');
-            if (countElement) {
-                countElement.textContent = count;
             }
-        }
+            initTableResize();
+            // =========== 列宽拖动结束 ===========
 
-        // 弹窗函数保持不变
-        function openAddDialog() {
-            layui.use('layer', function () {
-                var layer = layui.layer;
+            // =========== 修复后的筛选逻辑 ===========
+            // 按班级筛选
+            function filterByClass() {
+                var selectedClass = document.getElementById('classFilter').value;
+                var rows = document.querySelectorAll('#studentTable tbody tr');
+                var visibleCount = 0;
+                var currentRowNum = 1;
 
-                layer.open({
-                    type: 2,
-                    title: false,
-                    area: ['500px', '450px'],
-                    maxmin: false,
-                    closeBtn: 0,
-                    content: '@Url.Action("Add", "Student")',
-                    success: function (layero, index) {
-                        // 弹窗加载成功后的回调
-                    },
-                    end: function () {
-                        // 弹窗关闭后刷新页面
-                        window.location.reload();
+                rows.forEach(function (row) {
+                    // 排除暂无数据的行
+                    if (row.cells.length === 1 && row.cells[0].colSpan === 7) return;
+
+                    var rowClass = row.getAttribute('data-class');
+                    var sexFilter = document.getElementById('sexFilter').value;
+                    var rowSex = row.getAttribute('data-sex');
+
+                    // 判断是否显示该行
+                    var showByClass = (selectedClass === '' || selectedClass === '全部' || rowClass === selectedClass);
+                    var showBySex = (sexFilter === '' || sexFilter === '全部' || rowSex === sexFilter);
+
+                    if (showByClass && showBySex) {
+                        row.style.display = '';
+                        // 更新行号
+                        row.cells[0].textContent = currentRowNum++;
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
                     }
                 });
-            });
-        }
+            }
 
-        function editStudent(id) {
-            layui.use('layer', function () {
-                var layer = layui.layer;
+            // 按性别筛选
+            function filterBySex() {
+                var selectedSex = document.getElementById('sexFilter').value;
+                var rows = document.querySelectorAll('#studentTable tbody tr');
+                var visibleCount = 0;
+                var currentRowNum = 1;
 
-                layer.open({
-                    type: 2,
-                    title: false,
-                    area: ['500px', '450px'],
-                    maxmin: false,
-                    closeBtn: 0,
-                    content: '@Url.Action("Update", "Student")' + '?id=' + id,
-                    success: function (layero, index) {
-                        // 弹窗加载成功后的回调
-                    },
-                    end: function () {
-                        // 弹窗关闭后刷新页面
-                        window.location.reload();
+                rows.forEach(function (row) {
+                    // 排除暂无数据的行
+                    if (row.cells.length === 1 && row.cells[0].colSpan === 7) return;
+
+                    var rowSex = row.getAttribute('data-sex');
+                    var classFilter = document.getElementById('classFilter').value;
+                    var rowClass = row.getAttribute('data-class');
+
+                    // 判断是否显示该行
+                    var showBySex = (selectedSex === '' || selectedSex === '全部' || rowSex === selectedSex);
+                    var showByClass = (classFilter === '' || classFilter === '全部' || rowClass === classFilter);
+
+                    if (showBySex && showByClass) {
+                        row.style.display = '';
+                        // 更新行号
+                        row.cells[0].textContent = currentRowNum++;
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
                     }
                 });
-            });
-        }
+            }
 
-        function deleteStudent(id, name) {
-            layui.use(['layer', 'jquery'], function () {
-                var layer = layui.layer;
-                var $ = layui.$;
+            // 重置筛选
+            function resetFilters() {
+                document.getElementById('classFilter').value = '';
+                document.getElementById('sexFilter').value = '';
 
-                layer.confirm('确定要删除学生 【' + name + '】 吗？', {
-                    title: '删除确认',
-                    icon: 3,
-                    btn: ['确定', '取消']
-                }, function (index) {
-                    layer.close(index);
-                    var loadingIndex = layer.load(1, { shade: [0.1, '#fff'] });
+                var rows = document.querySelectorAll('#studentTable tbody tr');
+                var currentRowNum = 1;
 
-                    var form = $('<form method="post" style="display:none;"></form>');
-                    form.attr('action', '@Url.Action("Delete", "Student")');
-                    form.attr('id', 'deleteForm_' + id);
+                rows.forEach(function (row) {
+                    // 排除暂无数据的行
+                    if (row.cells.length === 1 && row.cells[0].colSpan === 7) return;
 
-                    var idInput = $('<input type="hidden" name="id" />');
-                    idInput.val(id);
-                    form.append(idInput);
-
-                    var tokenHtml = '@Html.AntiForgeryToken()';
-                    form.append($(tokenHtml));
-
-                    $('body').append(form);
-                    form.submit();
-
-                    setTimeout(function () {
-                        layer.close(loadingIndex);
-                        var formExists = $('#deleteForm_' + id).length > 0;
-                        if (!formExists) {
-                            layer.msg('删除成功', { icon: 1 });
-                            setTimeout(function () {
-                                window.location.reload();
-                            }, 1500);
-                        } else {
-                            layer.msg('删除失败，请重试', { icon: 2 });
-                            $('#deleteForm_' + id).remove();
-                        }
-                    }, 2000);
-                }, function (index) {
-                    layer.close(index);
+                    row.style.display = '';
+                    // 恢复行号
+                    row.cells[0].textContent = currentRowNum++;
                 });
-            });
-        }
+            }
+            // =========== 筛选逻辑结束 ===========
+
+            // 暴露函数到全局，确保onchange能调用
+            window.filterByClass = filterByClass;
+            window.filterBySex = filterBySex;
+            window.resetFilters = resetFilters;
+
+            // 增删改功能
+            window.openAddDialog = function () {
+                layer.open({ type:2, title:false, area:['500px','450px'], closeBtn:0, content:'@Url.Action("Add","Student")', end:function(){location.reload();} });
+            };
+
+            window.editStudent = function (id) {
+                layer.open({ type:2, title:false, area:['500px','450px'], closeBtn:0, content:'@Url.Action("Update","Student")?id='+id, end:function(){location.reload();} });
+            };
+
+            window.deleteStudent = function (id,name) {
+                layer.confirm('确定删除【'+name+'】？', function(){
+                    var f = $('<form method="post" style="display:none"></form>').attr('action','@Url.Action("Delete","Student")');
+                    f.append('<input name="id" value="'+id+'">');
+                    f.append('@Html.AntiForgeryToken()');
+                    $('body').append(f);
+                    f.submit();
+                });
+            };
+        });
     </script>
 }
