@@ -175,7 +175,6 @@
     <Content Include="Content\layui\css\layui.css" />
     <Content Include="Content\layui\font\iconfont.svg" />
     <Content Include="Content\layui\layui.js" />
-    <Content Include="Content\Student\StudentList.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />

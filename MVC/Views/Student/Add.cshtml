@@ -251,7 +251,7 @@
 
                 <div class="button-container">
                     <input type="submit" value="添加" class="layui-btn layui-btn-submit" />
-                    <a href="@Url.Action("Index")" class="layui-btn layui-btn-back">返回</a>
+                    <button type="button" class="layui-btn layui-btn-cancel" onclick="closeWindow()">取消</button>
                 </div>
             </div>
         }
@@ -268,7 +268,7 @@
                     sexSelect.value = currentSex;
                 }
             }
-            
+
             // 添加表单验证
             var form = document.getElementById('addForm');
             if (form) {
@@ -277,10 +277,10 @@
                     var sex = document.getElementById('Sex');
                     var age = document.getElementById('Age');
                     var className = document.getElementById('Class');
-                    
+
                     var isValid = true;
                     var errorMessages = [];
-                    
+
                     // 验证姓名
                     if (!name || !name.value.trim()) {
                         isValid = false;
@@ -289,7 +289,7 @@
                     } else {
                         name.style.borderColor = '#dcdfe6';
                     }
-                    
+
                     // 验证性别
                     if (!sex || !sex.value) {
                         isValid = false;
@@ -298,7 +298,7 @@
                     } else {
                         sex.style.borderColor = '#dcdfe6';
                     }
-                    
+
                     // 验证年龄
                     if (!age || !age.value.trim()) {
                         isValid = false;
@@ -311,7 +311,7 @@
                     } else {
                         age.style.borderColor = '#dcdfe6';
                     }
-                    
+
                     // 验证班级
                     if (!className || !className.value.trim()) {
                         isValid = false;
@@ -320,14 +320,14 @@
                     } else {
                         className.style.borderColor = '#dcdfe6';
                     }
-                    
+
                     if (!isValid) {
                         e.preventDefault();
                         alert(errorMessages.join('\n'));
                     }
                 });
             }
-            
+
             // 输入时清除错误样式
             var inputs = document.querySelectorAll('.form-control');
             inputs.forEach(function(input) {
@@ -336,6 +336,16 @@
                 });
             });
         });
+        // 关闭窗口函数
+function closeWindow() {
+    if (window.parent && window.parent.layer) {
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);
+    } else {
+        // 如果不是在弹窗中，跳转到列表页
+        window.location.href = '@Url.Action("Index")';
+    }
+}
     </script>
     
     @Scripts.Render("~/bundles/jqueryval")

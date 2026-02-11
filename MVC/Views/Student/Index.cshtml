@@ -1,89 +1,253 @@
 ﻿@model IList<MVC.Models.Student>
 @{
     ViewBag.Title = "学生列表";
+    // 获取分页参数
+    int totalCount = ViewBag.TotalCount;
+    int currentPage = ViewBag.CurrentPage;
+    int pageSize = ViewBag.PageSize;
+    int totalPages = ViewBag.TotalPages;
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>学生列表</title>
+<!-- 引用 layui -->
+<link href="~/Content/layui/css/layui.css" rel="stylesheet" />
 
-    <!-- 引用 layui -->
-    <link href="~/Content/layui/css/layui.css" rel="stylesheet">
+<style>
+    .container {
+        padding: 15px;
+    }
 
-    <!-- 引用全局样式 + 学生列表专属样式 -->
-    <link href="~/Content/Site.css" rel="stylesheet" type="text/css" />
-    <link href="~/Content/Student/StudentList.css" rel="stylesheet" type="text/css" />
+    .header-toolbar {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
 
-    <style>
-        .container {
-            padding: 15px;
-        }
+    .search-box {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+        align-items: center;
+    }
 
-        .header-toolbar {
-            margin-bottom: 15px;
-        }
+    .layui-input-inline {
+        margin-right: 10px;
+    }
 
-        .layui-table th {
-            text-align: center;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- 工具栏 -->
-        <div class="header-toolbar">
-            <button type="button" class="layui-btn layui-btn-normal" onclick="openAddDialog()">
-                <i class="layui-icon">&#xe608;</i> 添加学生
+    .layui-table th {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    /* 分页样式 */
+    .pagination-container {
+        margin-top: 20px;
+        text-align: right;
+    }
+</style>
+
+<div class="container">
+    <!-- 工具栏和搜索区域 -->
+    <div class="header-toolbar">
+        <button type="button" class="layui-btn layui-btn-normal" onclick="openAddDialog()">
+            <i class="layui-icon">&#xe608;</i> 添加学生
+        </button>
+
+        <!-- 搜索区域 -->
+        <div class="search-box">
+            <!-- 班级筛选 -->
+            <div class="layui-input-inline">
+                <input type="text" id="classFilter" list="classOptions"
+                       placeholder="按班级筛选" class="layui-input"
+                       onchange="filterByClass()" style="width: 150px;">
+                <datalist id="classOptions">
+                    <option value="全部"></option>
+                    @{
+                        // 注意：如果需要筛选所有班级，需单独查询所有班级（因为当前Model是分页后的数据）
+                        using (var db = new MVC.Models.studyCEntities1())
+                        {
+                            var uniqueClasses = db.Student.Select(s => s.Class).Distinct().ToList();
+                            foreach (var className in uniqueClasses)
+                            {
+                                <option value="@className">@className</option>
+                            }
+                        }
+                    }
+                </datalist>
+            </div>
+
+            <!-- 性别筛选 -->
+            <div class="layui-input-inline">
+                <input type="text" id="sexFilter" list="sexOptions"
+                       placeholder="按性别筛选" class="layui-input"
+                       onchange="filterBySex()" style="width: 120px;">
+                <datalist id="sexOptions">
+                    <option value="全部">全部</option>
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </datalist>
+            </div>
+
+            <!-- 重置按钮 -->
+            <button type="button" class="layui-btn layui-btn-primary" onclick="resetFilters()">
+                重置筛选
             </button>
         </div>
-
-        <!-- 学生列表 -->
-        <table class="layui-table">
-            <thead>
-                <tr>
-                    <th width="80">ID</th>
-                    <th>姓名</th>
-                    <th width="100">性别</th>
-                    <th width="100">年龄</th>
-                    <th>班级</th>
-                    <th width="200">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (MVC.Models.Student s in Model)
-                {
-                    <tr>
-                        <td style="text-align: center;">@s.ID</td>
-                        <td>@s.Name</td>
-                        <td style="text-align: center;">@s.Sex</td>
-                        <td style="text-align: center;">@s.Age</td>
-                        <td>@s.Class</td>
-                        <td style="text-align: center;">
-                            <button class="layui-btn layui-btn-xs" onclick="editStudent(@s.ID)">
-                                <i class="layui-icon">&#xe642;</i> 编辑
-                            </button>
-                            <button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteStudent(@s.ID, '@s.Name')">
-                                <i class="layui-icon">&#xe640;</i> 删除
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
     </div>
 
+    <!-- 学生列表 -->
+    <table class="layui-table" id="studentTable">
+        <thead>
+            <tr>
+                <th width="80">ID</th>
+                <th>姓名</th>
+                <th width="100">性别</th>
+                <th width="100">年龄</th>
+                <th>班级</th>
+                <th width="200">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (MVC.Models.Student s in Model)
+            {
+                <tr data-class="@s.Class" data-sex="@s.Sex">
+                    <td style="text-align: center;">@s.ID</td>
+                    <td>@s.Name</td>
+                    <td style="text-align: center;">@s.Sex</td>
+                    <td style="text-align: center;">@s.Age</td>
+                    <td>@s.Class</td>
+                    <td style="text-align: center;">
+                        <button class="layui-btn layui-btn-xs" onclick="editStudent(@s.ID)">
+                            <i class="layui-icon">&#xe642;</i> 编辑
+                        </button>
+                        <button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteStudent(@s.ID, '@s.Name')">
+                            <i class="layui-icon">&#xe640;</i> 删除
+                        </button>
+                    </td>
+                </tr>
+            }
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center;">暂无数据</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- 分页组件 -->
+    <div class="pagination-container" id="pagination"></div>
+
+</div>
+
+@section Scripts {
     <!-- 引入 layui.js -->
     <script src="~/Content/layui/layui.js"></script>
-    <script src="~/Scripts/jquery-3.6.0.min.js"></script>
 
     <script>
-        // 打开添加学生弹窗
+        // 初始化layui分页
+        layui.use(['laypage', 'layer', 'jquery'], function () {
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var $ = layui.$;
+
+            // 渲染分页
+            laypage.render({
+                elem: 'pagination', // 分页容器ID
+                count: @totalCount, // 总记录数
+                limit: @pageSize,   // 每页显示条数
+                curr: @currentPage, // 当前页码
+                layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip'], // 分页布局
+                limits: [5, 10, 20, 50], // 可选每页条数
+                jump: function (obj, first) {
+                    // 首次加载不执行
+                    if (!first) {
+                        // 跳转到指定页码
+                        window.location.href = '@Url.Action("Index", "Student")?page=' + obj.curr + '&pageSize=' + obj.limit;
+                    }
+                }
+            });
+        });
+
+        // 筛选函数（适配分页后的本地筛选）
+        function filterByClass() {
+            var selectedClass = document.getElementById('classFilter').value;
+            var rows = document.querySelectorAll('#studentTable tbody tr');
+            var visibleCount = 0;
+
+            rows.forEach(function (row) {
+                // 排除暂无数据的行
+                if (row.cells.length === 1 && row.cells[0].colSpan === 6) return;
+
+                var rowClass = row.getAttribute('data-class');
+                var sexFilter = document.getElementById('sexFilter').value;
+                var rowSex = row.getAttribute('data-sex');
+
+                var showByClass = (selectedClass === '' || selectedClass === '全部' || rowClass === selectedClass);
+                var showBySex = (sexFilter === '' || sexFilter === '全部' || rowSex === sexFilter);
+
+                if (showByClass && showBySex) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            updateCounts(visibleCount);
+        }
+
+        function filterBySex() {
+            var selectedSex = document.getElementById('sexFilter').value;
+            var rows = document.querySelectorAll('#studentTable tbody tr');
+            var visibleCount = 0;
+
+            rows.forEach(function (row) {
+                // 排除暂无数据的行
+                if (row.cells.length === 1 && row.cells[0].colSpan === 6) return;
+
+                var rowSex = row.getAttribute('data-sex');
+                var classFilter = document.getElementById('classFilter').value;
+                var rowClass = row.getAttribute('data-class');
+
+                var showBySex = (selectedSex === '' || selectedSex === '全部' || rowSex === selectedSex);
+                var showByClass = (classFilter === '' || classFilter === '全部' || rowClass === classFilter);
+
+                if (showBySex && showByClass) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            updateCounts(visibleCount);
+        }
+
+        function resetFilters() {
+            document.getElementById('classFilter').value = '';
+            document.getElementById('sexFilter').value = '';
+
+            var rows = document.querySelectorAll('#studentTable tbody tr');
+            rows.forEach(function (row) {
+                // 排除暂无数据的行
+                if (row.cells.length === 1 && row.cells[0].colSpan === 6) return;
+
+                row.style.display = '';
+            });
+
+            // 重置统计数为当前页的记录数
+            updateCounts(@Model.Count);
+        }
+
+        function updateCounts(count) {
+            document.getElementById('currentCount').textContent = count;
+        }
+
+        // 弹窗函数保持不变
         function openAddDialog() {
-            layui.use('layer', function() {
+            layui.use('layer', function () {
                 var layer = layui.layer;
 
                 layer.open({
@@ -93,10 +257,10 @@
                     maxmin: false,
                     closeBtn: 0,
                     content: '@Url.Action("Add", "Student")',
-                    success: function(layero, index) {
+                    success: function (layero, index) {
                         // 弹窗加载成功后的回调
                     },
-                    end: function() {
+                    end: function () {
                         // 弹窗关闭后刷新页面
                         window.location.reload();
                     }
@@ -104,9 +268,8 @@
             });
         }
 
-        // 编辑学生
         function editStudent(id) {
-            layui.use('layer', function() {
+            layui.use('layer', function () {
                 var layer = layui.layer;
 
                 layer.open({
@@ -116,82 +279,61 @@
                     maxmin: false,
                     closeBtn: 0,
                     content: '@Url.Action("Update", "Student")' + '?id=' + id,
-                    success: function(layero, index) {
+                    success: function (layero, index) {
                         // 弹窗加载成功后的回调
                     },
-                    end: function() {
+                    end: function () {
                         // 弹窗关闭后刷新页面
                         window.location.reload();
                     }
                 });
             });
         }
-  function deleteStudent(id, name) {
-    layui.use(['layer', 'jquery'], function() {
-        var layer = layui.layer;
-        var $ = layui.$;
 
-        // 显示确认提示
-        layer.confirm('确定要删除学生 【' + name + '】 吗？', {
-            title: '删除确认',
-            icon: 3,
-            btn: ['确定', '取消']
-        }, function(index) {
-            // 用户点击了"确定"
-            layer.close(index);
+        function deleteStudent(id, name) {
+            layui.use(['layer', 'jquery'], function () {
+                var layer = layui.layer;
+                var $ = layui.$;
 
-            // 显示加载中提示
-            var loadingIndex = layer.load(1, {
-                shade: [0.1, '#fff']
+                layer.confirm('确定要删除学生 【' + name + '】 吗？', {
+                    title: '删除确认',
+                    icon: 3,
+                    btn: ['确定', '取消']
+                }, function (index) {
+                    layer.close(index);
+                    var loadingIndex = layer.load(1, { shade: [0.1, '#fff'] });
+
+                    var form = $('<form method="post" style="display:none;"></form>');
+                    form.attr('action', '@Url.Action("Delete", "Student")');
+                    form.attr('id', 'deleteForm_' + id);
+
+                    var idInput = $('<input type="hidden" name="id" />');
+                    idInput.val(id);
+                    form.append(idInput);
+
+                    var tokenHtml = '@Html.AntiForgeryToken()';
+                    form.append($(tokenHtml));
+
+                    $('body').append(form);
+                    form.submit();
+
+                    setTimeout(function () {
+                        layer.close(loadingIndex);
+                        var formExists = $('#deleteForm_' + id).length > 0;
+                        if (!formExists) {
+                            layer.msg('删除成功', { icon: 1 });
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            layer.msg('删除失败，请重试', { icon: 2 });
+                            $('#deleteForm_' + id).remove();
+                        }
+                    }, 2000);
+                }, function (index) {
+                    layer.close(index);
+                });
             });
-
-            // 创建隐藏表单
-            var form = $('<form method="post" style="display:none;"></form>');
-            form.attr('action', '@Url.Action("Delete", "Student")');
-            form.attr('id', 'deleteForm_' + id);
-
-            // 添加ID字段
-            var idInput = $('<input type="hidden" name="id" />');
-            idInput.val(id);
-            form.append(idInput);
-
-            // 添加防伪令牌
-            var tokenHtml = '@Html.AntiForgeryToken()';
-            form.append($(tokenHtml));
-
-            // 添加到页面并提交
-            $('body').append(form);
-
-            // 提交表单
-            form.submit();
-
-            // 设置一个超时检测，如果页面没有重载，显示成功提示
-            setTimeout(function() {
-                layer.close(loadingIndex);
-
-                // 检查表单是否已提交并移除
-                var formExists = $('#deleteForm_' + id).length > 0;
-                if (!formExists) {
-                    // 表单已提交，显示成功提示并刷新页面
-                    layer.msg('删除成功', { icon: 1 });
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    // 表单还存在，可能提交失败
-                    layer.msg('删除失败，请重试', { icon: 2 });
-                    $('#deleteForm_' + id).remove(); // 清理表单
-                }
-            }, 2000);
-
-        }, function(index) {
-            // 用户点击了"取消"，关闭提示框
-            layer.close(index);
-        });
-    });
-}
-
-
+        }
     </script>
-</body>
-</html>
+}
